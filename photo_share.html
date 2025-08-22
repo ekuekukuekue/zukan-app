@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>写真を共有</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <header><h1>写真を共有する</h1></header>
+
+  <p>この写真の公開用URLを生成します。</p>
+  <p>公開すると、インターネット上で誰でも閲覧できるようになります。</p>
+
+  <div class="photo-container">
+    <h3 id="photoName"></h3>
+    <img id="photoImage" src="" alt="共有する写真" style="max-width: 100%;" />
+  </div>
+
+  <div class="button-section">
+    <button id="btnGenerate">公開URLを生成</button>
+  </div>
+  
+  <p id="status" style="margin-top: 20px;"></p>
+  <p id="shareLink" style="display:none;">
+    共有URL: <a href="#" id="publicUrl" target="_blank"></a>
+  </p>
+
+  <button onclick="history.back()">戻る</button>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const zukanId = localStorage.getItem('currentZukanId');
+      const photoId = localStorage.getItem('currentPhotoId');
+      
+      if (!zukanId || !photoId) {
+        alert("共有する写真が選択されていません。");
+        history.back();
+        return;
+      }
+
+      const zukan = getZukanById(zukanId);
+      const photo = zukan.photos.find(p => p.id === photoId);
+
+      if (!zukan || !photo) {
+        document.getElementById('status').textContent = 'エラー: 写真が見つかりません。';
+        document.getElementById('status').style.color = 'red';
+        return;
+      }
+
+      document.getElementById('photoName').textContent = photo.name;
+      document.getElementById('photoImage').src = photo.image;
+
+      document.getElementById('btnGenerate').onclick = () => {
+        // GitHub PagesのURLを生成
+        const owner = 'YOUR_GITHUB_USERNAME'; 
+        const repo = 'YOUR_REPO_NAME';
+        const url = `https://${owner}.github.io/${repo}/photo_view.html?zukanId=${zukanId}&photoId=${photoId}`;
+        
+        document.getElementById('publicUrl').href = url;
+        document.getElementById('publicUrl').textContent = url;
+        document.getElementById('shareLink').style.display = 'block';
+        document.getElementById('status').textContent = '公開URLが生成されました！';
+        document.getElementById('status').style.color = 'green';
+      };
+    });
+  </script>
+</body>
+</html>
