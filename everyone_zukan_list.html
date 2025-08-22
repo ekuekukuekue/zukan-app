@@ -16,8 +16,8 @@
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
       const sharedListContainer = document.getElementById('sharedListContainer');
-      const owner = 'ekuekukuekue'; // あなたのGitHubユーザー名
-      const repo = 'zukan-app'; // あなたのリポジトリ名
+      const owner = 'ekuekukuekue';
+      const repo = 'zukan-app';
 
       try {
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/shared-zukans`);
