@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>共有された写真</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <header><h1>共有された写真</h1></header>
+
+  <div id="photoContainer"></div>
+  <p id="status"></p>
+
+  <button onclick="location.href='everyone_zukan_list.html'">みんなの図鑑に戻る</button>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const zukanId = urlParams.get('zukanId');
+      const photoId = urlParams.get('photoId');
+      const photoContainer = document.getElementById('photoContainer');
+      const status = document.getElementById('status');
+      
+      if (!zukanId || !photoId) {
+        status.textContent = 'エラー: 共有された情報が見つかりません。';
+        status.style.color = 'red';
+        return;
+      }
+
+      const owner = 'YOUR_GITHUB_USERNAME';
+      const repo = 'YOUR_REPO_NAME';
+
+      try {
+        const zukanResponse = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/shared-zukans/${zukanId}.json`);
+        if (!zukanResponse.ok) {
+          throw new Error('共有された図鑑が見つかりません。');
+        }
+        
+        const zukan = await zukanResponse.json();
+        const photo = zukan.photos.find(p => p.id === photoId);
+        
+        if (!photo) {
+          throw new Error('写真が見つかりません。');
+        }
+
+        const card = document.createElement('div');
+        card.className = 'photo-card';
+        card.innerHTML = `
+          <h3>${photo.name}</h3>
+          <p>${photo.description || ''}</p>
+          <img src="${photo.image}" alt="${photo.name}" width="100%">
+        `;
+        photoContainer.appendChild(card);
+
+        // 必要に応じてGPS情報を表示
+        if (photo.lat && photo.lng && zukan.shareGps) {
+          const mapDiv = document.createElement('div');
+          mapDiv.id = 'map';
+          mapDiv.style.height = '400px';
+          mapDiv.style.marginTop = '20px';
+          photoContainer.appendChild(mapDiv);
+
+          const map = L.map('map').setView([photo.lat, photo.lng], 13);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+          }).addTo(map);
+
+          L.marker([photo.lat, photo.lng]).addTo(map)
+            .bindPopup(photo.name || "撮影場所")
+            .openPopup();
+        }
+
+      } catch (error) {
+        status.textContent = `エラー: ${error.message}`;
+        status.style.color = 'red';
+      }
+    });
+  </script>
+</body>
+</html>
