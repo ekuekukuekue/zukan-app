@@ -40,6 +40,7 @@
             <img src="${photo.image}" alt="${photo.name}" width="200">
             <div id="map-${index}" style="height:200px; margin-top:10px;"></div>
             <button onclick="deletePhoto('${zukanId}', '${photo.id}')">この写真を削除</button>
+            <button onclick="localStorage.setItem('currentZukanId', '${zukanId}'); localStorage.setItem('currentPhotoId', '${photo.id}'); location.href = 'photo_share.html';">この写真を共有</button>
           `;
           photoList.appendChild(card);
 
