@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>図鑑一覧</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <header>
+    <h1>登録済み図鑑一覧</h1>
+  </header>
+  <div id="listContainer"></div>
+  <button id="btnBack">スタート画面に戻る</button>
+
+  <hr>
+
+  <h2>マップ</h2>
+  <div id="map" style="height:400px;"></div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const listContainer = document.getElementById('listContainer');
+      const btnBack = document.getElementById('btnBack');
+
+      const map = L.map('map').setView([35, 135], 5);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      // マーカーを管理するためのレイヤーグループ
+      const markerLayer = L.layerGroup().addTo(map);
+
+      function renderMapMarkers() {
+        markerLayer.clearLayers();
+        const zukans = getZukans();
+        zukans.forEach(zukan => {
+          if (zukan.photos) {
+            zukan.photos.forEach(photo => {
+              if (photo.lat && photo.lng && photo.showGps) {
+                const marker = L.marker([photo.lat, photo.lng]);
+                marker.bindPopup(`
+                  <b>${photo.name}</b><br>
+                  <img src="${photo.image}" width="100"><br>
+                  ${photo.description || ''}
+                `);
+                markerLayer.addLayer(marker);
+              }
+            });
+          }
+        });
+      }
+
+      function renderList() {
+        const zukans = getZukans();
+        if (zukans.length === 0) {
+          listContainer.innerHTML = '<p>まだ図鑑がありません。</p>';
+          return;
+        }
+
+        listContainer.innerHTML = '';
+        zukans.forEach(zukan => {
+          const div = document.createElement('div');
+          div.className = 'list-item';
+          div.innerHTML = `
+            <span>${zukan.name}</span>
+            <div>
+              <button onclick="localStorage.setItem('currentZukanId', '${zukan.id}'); location.href = 'add_photo.html';">写真を追加</button>
+              <button onclick="localStorage.setItem('currentZukanId', '${zukan.id}'); location.href = 'zukan_view.html';">見る</button>
+              <button onclick="localStorage.setItem('currentZukanId', '${zukan.id}'); location.href = 'share.html';">共有</button>
+              <button onclick="if(confirm('「${zukan.name}」を削除しますか？')) { deleteZukan('${zukan.id}'); renderList(); renderMapMarkers(); }">削除</button>
+            </div>
+          `;
+          listContainer.appendChild(div);
+        });
+      }
+
+      renderList();
+      renderMapMarkers();
+
+      btnBack.onclick = () => {
+        location.href = 'index.html';
+      };
+    });
+  </script>
+</body>
+</html>

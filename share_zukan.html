@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>図鑑を共有</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <header><h1>図鑑を共有する</h1></header>
+
+  <p>この図鑑を共有設定します。</p>
+
+  <div class="input-section">
+    <label for="shareGps">共有時にGPS情報を表示する：</label>
+    <input type="checkbox" id="shareGps" checked>
+  </div>
+  
+  <div class="button-section">
+    <button id="btnShare">共有する</button>
+    <button id="btnBack">戻る</button>
+  </div>
+
+  <script>
+    const zukanId = localStorage.getItem('currentZukanId');
+    if (!zukanId) {
+        alert("共有する図鑑が選択されていません。");
+        location.href = 'zukan_list.html';
+    }
+
+    document.getElementById('btnShare').onclick = () => {
+        const zukans = getZukans();
+        const zukan = zukans.find(z => z.id === zukanId);
+        
+        if (zukan) {
+            zukan.shared = true;
+            zukan.shareGps = document.getElementById('shareGps').checked;
+            saveZukans(zukans);
+            alert("図鑑が共有されました！");
+            location.href = 'zukan_list.html';
+        }
+    };
+
+    document.getElementById('btnBack').onclick = () => {
+        location.href = 'zukan_list.html';
+    };
+  </script>
+</body>
+</html>

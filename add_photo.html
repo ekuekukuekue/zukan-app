@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>写真を追加</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="script.js" defer></script>
+  <style>
+    /* カメラのプレビュー用スタイル */
+    #videoElement {
+      width: 100%;
+      height: auto;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+    }
+    #captureButton {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header><h1>写真を追加</h1></header>
+
+  <form id="photoForm">
+    <label>画像を選択: <input type="file" id="photoImage" accept="image/*" required></label>
+    <button type="submit">次へ</button>
+  </form>
+
+  <hr>
+
+  <h2>または、カメラで撮影</h2>
+  <video id="videoElement" autoplay playsinline></video>
+  <button id="captureButton">撮影</button>
+  <canvas id="canvasElement" style="display:none;"></canvas>
+
+  <p id="status"></p>
+
+  <button onclick="location.href='zukan_list.html'">図鑑一覧に戻る</button>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const zukanId = localStorage.getItem('currentZukanId');
+      if (!zukanId) {
+        alert("写真を追加する図鑑が選択されていません。図鑑一覧に戻ります。");
+        location.href = 'zukan_list.html';
+        return;
+      }
+
+      // ファイル選択フォームの処理
+      document.getElementById('photoForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const imageFile = document.getElementById('photoImage').files[0];
+
+        if (!imageFile) {
+          alert("画像を選んでください");
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 800;
+            const scaleSize = MAX_WIDTH / img.width;
+            canvas.width = MAX_WIDTH;
+            canvas.height = img.height * scaleSize;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            
+            const resizedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+            sessionStorage.setItem('currentPhoto', resizedDataUrl);
+            location.href = 'photo_info.html';
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(imageFile);
+      });
+
+      // カメラ機能の処理
+      const video = document.getElementById('videoElement');
+      const captureButton = document.getElementById('captureButton');
+      const canvas = document.getElementById('canvasElement');
+      const status = document.getElementById('status');
+      let stream;
+
+      // カメラへのアクセス許可を要求
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+          .then(function(s) {
+            stream = s;
+            video.srcObject = stream;
+            video.play();
+          })
+          .catch(function(error) {
+            console.error("カメラへのアクセスに失敗しました:", error);
+            status.textContent = 'カメラへのアクセスが拒否されました。ファイルから画像を選択してください。';
+            video.style.display = 'none';
+            captureButton.style.display = 'none';
+          });
+      } else {
+        status.textContent = 'お使いのブラウザはカメラ機能をサポートしていません。ファイルから画像を選択してください。';
+        video.style.display = 'none';
+        captureButton.style.display = 'none';
+      }
+
+      // 撮影ボタンのクリックイベント
+      captureButton.addEventListener('click', () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // キャプチャした画像をリサイズ
+        const resizedCanvas = document.createElement('canvas');
+        const MAX_WIDTH = 800;
+        const scaleSize = MAX_WIDTH / canvas.width;
+        resizedCanvas.width = MAX_WIDTH;
+        resizedCanvas.height = canvas.height * scaleSize;
+        const ctx = resizedCanvas.getContext('2d');
+        ctx.drawImage(canvas, 0, 0, resizedCanvas.width, resizedCanvas.height);
+        
+        const imageDataUrl = resizedCanvas.toDataURL('image/jpeg', 0.7);
+
+        sessionStorage.setItem('currentPhoto', imageDataUrl);
+        stream.getTracks().forEach(track => track.stop()); // カメラを停止
+        location.href = 'photo_info.html';
+      });
+    });
+  </script>
+</body>
+</html>

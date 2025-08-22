@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>新しい図鑑を作る</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <header><h1>新しい図鑑を作る</h1></header>
+  <label for="zukanName">図鑑の名前を入力してください：</label>
+  <input type="text" id="zukanName" placeholder="例：昆虫図鑑" />
+  <button id="btnNext">次へ</button>
+  <button id="btnBack">戻る</button>
+  <script>
+    const btnNext = document.getElementById('btnNext');
+    const btnBack = document.getElementById('btnBack');
+    const input = document.getElementById('zukanName');
+    
+    btnNext.onclick = () => {
+      const name = input.value.trim();
+      if (!name) {
+        alert('図鑑の名前を入力してください');
+        return;
+      }
+      const newId = addZukan(name);
+      localStorage.setItem('currentZukanId', newId);
+      location.href = '/app/add_photo.html';
+    };
+
+    btnBack.onclick = () => {
+      location.href = '/app/index.html';
+    };
+  </script>
+</body>
+</html>

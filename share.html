@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>図鑑を共有</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
+</head>
+<body>
+  <header><h1>図鑑を共有する</h1></header>
+
+  <p>GitHubを通して、この図鑑を公開用ウェブサイトに共有します。</p>
+  <p>公開すると、インターネット上で誰でも閲覧できるようになります。</p>
+
+  <div class="input-section">
+    <label for="githubToken">GitHubのPersonal Access Token:</label>
+    <input type="password" id="githubToken" placeholder="トークンを貼り付け" />
+    <small>このトークンはブラウザに保存され、共有処理にのみ使用されます。</small>
+  </div>
+  
+  <div class="input-section">
+    <label for="shareGps">GPS情報を表示する：</label>
+    <input type="checkbox" id="shareGps" checked>
+  </div>
+
+  <div class="button-section">
+    <button id="btnShare">共有する</button>
+    <button id="btnBack">戻る</button>
+  </div>
+  
+  <p id="status" style="margin-top: 20px;"></p>
+
+  <script src="script.js"></script>
+  <script>
+    const zukanId = localStorage.getItem('currentZukanId');
+    if (!zukanId) {
+        alert("共有する図鑑が選択されていません。");
+        location.href = 'zukan_list.html';
+    }
+
+    const githubTokenInput = document.getElementById('githubToken');
+    const btnShare = document.getElementById('btnShare');
+    const status = document.getElementById('status');
+    const shareGps = document.getElementById('shareGps');
+
+    const tokenCookie = Cookies.get('github_token');
+    if (tokenCookie) {
+      githubTokenInput.value = tokenCookie;
+    }
+
+    btnShare.onclick = async () => {
+      const token = githubTokenInput.value;
+      if (!token) {
+        alert('GitHubのPersonal Access Tokenを入力してください。');
+        return;
+      }
+      Cookies.set('github_token', token, { expires: 7 });
+
+      status.textContent = '共有処理を開始します...';
+      const zukan = getZukanById(zukanId);
+
+      if (!zukan) {
+        status.textContent = 'エラー: 図鑑が見つかりません。';
+        status.style.color = 'red';
+        return;
+      }
+
+      // 共有用データを作成
+      const sharedZukanData = {
+        id: zukan.id,
+        name: zukan.name,
+        shareGps: shareGps.checked,
+        photos: zukan.photos.map(photo => ({
+          id: photo.id,
+          name: photo.name,
+          description: photo.description,
+          image: photo.image,
+          lat: photo.lat,
+          lng: photo.lng
+        }))
+      };
+
+      try {
+        status.textContent = 'GitHubにデータをアップロード中...';
+        await pushToGitHub(token, sharedZukanData);
+        status.textContent = '共有が完了しました！みんなの図鑑で確認してください。';
+        status.style.color = 'green';
+      } catch (error) {
+        status.textContent = '共有に失敗しました。トークンやリポジトリの設定を確認してください。';
+        status.style.color = 'red';
+        console.error(error);
+      }
+    };
+
+    document.getElementById('btnBack').onclick = () => {
+      location.href = 'zukan_list.html';
+    };
+
+    // GitHubへのプッシュ機能（この関数はあくまでサンプルです）
+    // 実際のアプリケーションでは、サーバーサイドで安全に処理する必要があります。
+    // GitHub APIを直接叩く例です。
+    async function pushToGitHub(token, data) {
+      const owner = 'YOUR_GITHUB_USERNAME'; // あなたのGitHubユーザー名
+      const repo = 'YOUR_REPO_NAME'; // あなたのリポジトリ名
+      const path = `shared-zukans/${data.id}.json`;
+      const message = `Add shared zukan: ${data.name}`;
+      const content = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+
+      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+      
+      const response = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: message,
+          content: content
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message);
+      }
+      return await response.json();
+    }
+  </script>
+</body>
+</html>

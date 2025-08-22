@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>写真の情報を入力</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <header><h1>写真の情報を入力</h1></header>
+
+  <div class="photo-section">
+    <img id="displayImage" src="" alt="プレビュー" style="max-width: 100%; margin-bottom: 20px;" />
+  </div>
+
+  <div class="input-section">
+    <label for="photoName">名前：</label>
+    <input type="text" id="photoName" />
+  </div>
+
+  <div class="input-section">
+    <label for="photoDescription">説明：</label>
+    <textarea id="photoDescription"></textarea>
+  </div>
+  
+  <div class="input-section">
+    <label for="showGps">GPS情報を表示する：</label>
+    <input type="checkbox" id="showGps" checked>
+  </div>
+
+  <div class="button-section">
+    <button id="btnSave">登録</button>
+    <button id="btnBack">戻る</button>
+  </div>
+
+  <script>
+    const image = document.getElementById('displayImage');
+    const nameInput = document.getElementById('photoName');
+    const descInput = document.getElementById('photoDescription');
+    const btnSave = document.getElementById('btnSave');
+    const btnBack = document.getElementById('btnBack');
+
+    const photoData = sessionStorage.getItem('currentPhoto');
+    if (photoData) {
+      image.src = photoData;
+    } else {
+      console.warn('currentPhoto が見つかりません');
+      alert('画像情報がありません。再度写真を選択してください。');
+      location.href = 'add_photo.html';
+    }
+
+    btnSave.onclick = () => {
+      const name = nameInput.value.trim();
+      const desc = descInput.value.trim();
+      const showGps = document.getElementById('showGps').checked;
+
+      if (!photoData || !name || !desc) {
+        alert('名前と説明を入力してください');
+        return;
+      }
+
+      const zukanId = localStorage.getItem('currentZukanId');
+      if (!zukanId) {
+        alert('図鑑が選択されていません');
+        return;
+      }
+      
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          const photo = { id: Date.now().toString(), image: photoData, name: name, description: desc, lat: lat, lng: lng, showGps: showGps };
+          addPhotoToZukan(zukanId, photo);
+          sessionStorage.removeItem('currentPhoto');
+          location.href = 'complete.html';
+        }, (err) => {
+          alert("位置情報を取得できませんでした");
+          const photo = { id: Date.now().toString(), image: photoData, name: name, description: desc, lat: null, lng: null, showGps: showGps };
+          addPhotoToZukan(zukanId, photo);
+          sessionStorage.removeItem('currentPhoto');
+          location.href = 'complete.html';
+        });
+      } else {
+        alert("この端末では位置情報が使えません");
+        const photo = { id: Date.now().toString(), image: photoData, name: name, description: desc, lat: null, lng: null, showGps: showGps };
+        addPhotoToZukan(zukanId, photo);
+        sessionStorage.removeItem('currentPhoto');
+        location.href = 'complete.html';
+      }
+    };
+
+    btnBack.onclick = () => {
+      location.href = 'add_photo.html';
+    };
+
+    function addPhotoToZukan(zukanId, photo) {
+      const zukans = getZukans();
+      const zukanIndex = zukans.findIndex(zukan => zukan.id === zukanId);
+      if (zukanIndex !== -1) {
+        if (!zukans[zukanIndex].photos) {
+          zukans[zukanIndex].photos = [];
+        }
+        zukans[zukanIndex].photos.push(photo);
+        saveZukans(zukans);
+      } else {
+        console.error('指定された図鑑が見つかりません');
+      }
+    }
+  </script>
+</body>
+</html>
