@@ -15,12 +15,12 @@
   <button onclick="location.href='index.html'">スタート画面に戻る</button>
 
   <script>
-    const owner = 'ekuekukuekue';
-    const repo = 'zukan-app';
+    const owner = 'ekuekukuekue'; // あなたのGitHubユーザー名
+    const repo = 'zukan-app'; // あなたのリポジトリ名
 
     document.addEventListener("DOMContentLoaded", async () => {
       const sharedListContainer = document.getElementById('sharedListContainer');
-      const token = Cookies.get('github_token');
+      const token = Cookies.get('github_token'); // トークンをブラウザのCookieから読み込む
 
       try {
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/shared-zukans`);
@@ -47,7 +47,7 @@
           div.innerHTML = `
             <span>${zukan.name}</span>
             <div>
-              <button onclick="localStorage.setItem('currentZukanId', '${zukan.id}'); localStorage.setItem('currentZukanSha', '${zukan.sha}'); location.href = 'zukan_view.html';">見る</button>
+              <button onclick="localStorage.setItem('currentZukanId', '${zukan.id}'); location.href = 'zukan_view.html';">見る</button>
               <button onclick="if(confirm('「${zukan.name}」を削除しますか？')) { deleteSharedZukan('${zukan.id}', '${zukan.sha}', '${token}'); }">削除</button>
             </div>
           `;
@@ -83,7 +83,8 @@
         });
 
         if (!response.ok) {
-          throw new Error('削除に失敗しました。トークンや権限を確認してください。');
+          const error = await response.json();
+          throw new Error(error.message);
         }
 
         alert('図鑑が正常に削除されました。');
