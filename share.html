@@ -96,12 +96,10 @@
       location.href = 'zukan_list.html';
     };
 
-    // GitHubへのプッシュ機能（この関数はあくまでサンプルです）
-    // 実際のアプリケーションでは、サーバーサイドで安全に処理する必要があります。
-    // GitHub APIを直接叩く例です。
+    // GitHubへのプッシュ機能
     async function pushToGitHub(token, data) {
-      const owner = 'ekuekukuekue'; // あなたのGitHubユーザー名
-      const repo = 'zukan-app'; // あなたのリポジトリ名
+      const owner = 'ekuekukuekue'; // ここにあなたのGitHubユーザー名を正確に入力
+      const repo = 'zukan-app'; // ここにあなたのリポジトリ名を正確に入力
       const path = `shared-zukans/${data.id}.json`;
       const message = `Add shared zukan: ${data.name}`;
       const content = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
